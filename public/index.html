@@ -1,73 +1,50 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<title>랜덤 위인 퀴즈</title>
-<style>
-  body { font-family: sans-serif; text-align: center; padding: 40px; }
-  img { width: 250px; height: 250px; object-fit: contain; border-radius: 10px; margin-bottom: 10px; background: #eee; }
-  #hint { font-weight: bold; color: #555; margin: 10px 0; }
-  input, button { padding: 8px; margin: 5px; }
-  #result { margin-top: 15px; font-weight: bold; color: #d33; }
-</style>
+  <meta charset="UTF-8">
+  <title>랜덤 위인 퀴즈</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 40px; }
+    img { width: 250px; height: 250px; object-fit: contain; background: #eee; border-radius: 10px; margin-bottom: 10px; }
+    #hint { font-weight: bold; color: #555; margin: 10px 0; }
+    input, button { padding: 8px; margin: 5px; }
+  </style>
 </head>
 <body>
-<h1>랜덤 위인 퀴즈</h1>
-<div id="quiz">
-  <img id="person-img" src="" alt="사진">
-  <p id="hint"></p>
-  <input id="answer" placeholder="이 사람은 누구일까요?">
-  <br>
-  <button onclick="checkAnswer()">정답 확인</button>
-  <button onclick="loadQuiz()">다시 시작</button>
-</div>
-<p id="result"></p>
+  <h1>랜덤 위인 퀴즈</h1>
+  <div id="quiz">
+    <img id="person-img" src="" alt="사진">
+    <p id="hint"></p>
+    <input id="answer" placeholder="이 사람은 누구일까요?">
+    <button onclick="checkAnswer()">정답 확인</button>
+    <button onclick="loadQuiz()">다시 시작</button>
+  </div>
+  <p id="result"></p>
 
-<script>
-let currentName = "";
+  <script>
+    let currentName = "";
 
-async function loadQuiz() {
-  document.getElementById("result").textContent = "";
-  document.getElementById("person-img").src = "";
-  document.getElementById("hint").textContent = "";
-  currentName = "";
-  document.getElementById("answer").value = "";
-
-  try {
-    const res = await fetch("/api/quiz");
-    const data = await res.json();
-
-    if (!data || data.error) {
-      document.getElementById("result").textContent = data?.error || "퀴즈 데이터를 불러오지 못했습니다.";
-      return;
+    async function loadQuiz() {
+      document.getElementById("result").textContent = "";
+      const res = await fetch("/api/quiz");
+      const data = await res.json();
+      if (data.error) {
+        document.getElementById("result").textContent = data.error;
+        return;
+      }
+      currentName = data.name;
+      document.getElementById("person-img").src = data.imageUrl;
+      document.getElementById("hint").textContent = "힌트: " + data.hint;
+      document.getElementById("answer").value = "";
     }
 
-    currentName = data.name;
-    document.getElementById("person-img").src = data.imageUrl || "";
-    document.getElementById("hint").textContent = "힌트: " + data.hint;
-  } catch (err) {
-    document.getElementById("result").textContent = "서버와 연결할 수 없습니다.";
-    console.error(err);
-  }
-}
+    function checkAnswer() {
+      const user = document.getElementById("answer").value.trim();
+      const result = document.getElementById("result");
+      result.textContent = (user === currentName) ? "✅ 정답입니다!" : `❌ 오답! 정답은 ${currentName}`;
+    }
 
-function checkAnswer() {
-  if (!currentName) return;
-
-  const userInput = document.getElementById("answer").value
-    .trim()
-    .replace(/\s+/g, ""); // 공백 제거
-
-  const correct = currentName.replace(/\s+/g, "");
-
-  const result = document.getElementById("result");
-  result.textContent = (userInput === correct)
-    ? "✅ 정답입니다!"
-    : `❌ 오답! 정답은 ${currentName}`;
-}
-
-// 페이지 로드 시 자동 퀴즈
-loadQuiz();
-</script>
+    loadQuiz();
+  </script>
 </body>
 </html>

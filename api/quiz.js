@@ -1,16 +1,8 @@
-// server.js
-import express from "express";
 import axios from "axios";
-import dotenv from "dotenv";
-dotenv.config();
 
-const app = express();
-app.use(express.static("public"));
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+const GOOGLE_CX = process.env.GOOGLE_CX;
 
-const GOOGLE_API_KEY = "AIzaSyCwXEH8l97wZsqgUXX1a4whJxe6-JR8iGE";
-const GOOGLE_CX = "e4d88530845874719";
-
-/* ✅ 1. 위인 데이터 풀 */
 function refreshDailyFigures() {
   const allFigures = [
     { name: "세종대왕", hint: "한글 창제" },
@@ -23,38 +15,41 @@ function refreshDailyFigures() {
     { name: "신사임당", hint: "조선 시대 화가이자 율곡 이이의 어머니" },
     { name: "정약용", hint: "조선의 실학자, 다산" },
     { name: "마리 퀴리", hint: "방사능 연구" },
-    { name: "넬슨 만델라", hint: "남아프리카공화국 인권운동가" },
     { name: "레오나르도 다 빈치", hint: "모나리자 화가" },
     { name: "나폴레옹", hint: "프랑스의 군인·정치가" },
     { name: "체 게바라", hint: "쿠바 혁명가" },
     { name: "갈릴레오 갈릴레이", hint: "지동설 주장" }
   ];
-
   const shuffled = allFigures.sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, 6); // 🔹 하루 세트: 랜덤 6명
+  return shuffled.slice(0, 6);
 }
 
-/* ✅ 2. 날짜 기준 자동 갱신 */
+// 하루 단위 갱신
 let figures = refreshDailyFigures();
 let today = new Date().toDateString();
 let usedIndexes = [];
+let callCount = 0;
+const DAILY_LIMIT = 100;
 
 function resetIfNewDay() {
   const now = new Date().toDateString();
   if (now !== today) {
     today = now;
-    figures = refreshDailyFigures(); // 새 인물 세트 생성
+    figures = refreshDailyFigures();
     usedIndexes = [];
-    console.log("🔄 새로운 날짜 감지 → 위인 세트 갱신 완료");
+    callCount = 0;
+    console.log("🔄 새로운 날짜 감지 → 위인 세트 갱신 완료 & 호출 카운트 초기화");
   }
 }
 
-/* ✅ 3. API 엔드포인트 */
-app.get("/api/quiz", async (req, res) => {
+export default async function handler(req, res) {
   resetIfNewDay();
 
+  if (callCount >= DAILY_LIMIT) {
+    return res.status(429).json({ error: "오늘의 호출 한도를 초과했습니다 (100회)" });
+  }
+
   try {
-    // 중복되지 않은 문제 선택
     const availableIndexes = figures
       .map((_, i) => i)
       .filter((i) => !usedIndexes.includes(i));
@@ -67,7 +62,6 @@ app.get("/api/quiz", async (req, res) => {
     usedIndexes.push(selectedIndex);
     const question = figures[selectedIndex];
 
-    // 구글 이미지 검색
     const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${GOOGLE_CX}&searchType=image&q=${encodeURIComponent(
       question.name
     )}`;
@@ -75,7 +69,9 @@ app.get("/api/quiz", async (req, res) => {
     const { data } = await axios.get(url);
     const imageUrl = data.items?.[0]?.link || "";
 
-    res.json({
+    callCount++;
+
+    res.status(200).json({
       name: question.name,
       hint: question.hint,
       imageUrl
@@ -83,8 +79,4 @@ app.get("/api/quiz", async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-});
-
-
-/* ✅ 5. Vercel 호환용 */
-export default app;
+}

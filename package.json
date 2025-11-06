@@ -14,5 +14,13 @@
   "description": "",
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/happyboy1327-sketch/personimage-project.git"
+  },
+  "bugs": {
+    "url": "https://github.com/happyboy1327-sketch/personimage-project/issues"
+  },
+  "homepage": "https://github.com/happyboy1327-sketch/personimage-project#readme"
 }
