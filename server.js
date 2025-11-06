@@ -85,8 +85,6 @@ app.get("/api/quiz", async (req, res) => {
   }
 });
 
-/* ✅ 4. 로컬 실행용 */
-app.listen(3003, () => console.log("✅ 서버 실행 중: http://localhost:3003"));
 
 /* ✅ 5. Vercel 호환용 */
 export default app;
