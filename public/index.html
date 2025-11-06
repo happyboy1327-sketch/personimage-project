@@ -4,47 +4,149 @@
   <meta charset="UTF-8">
   <title>랜덤 위인 퀴즈</title>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 40px; }
-    img { width: 250px; height: 250px; object-fit: contain; background: #eee; border-radius: 10px; margin-bottom: 10px; }
-    #hint { font-weight: bold; color: #555; margin: 10px 0; }
-    input, button { padding: 8px; margin: 5px; }
+    body {
+      font-family: "Noto Sans KR", sans-serif;
+      text-align: center;
+      background: #f9f9f9;
+      padding: 20px;
+      margin: 0;
+    }
+
+    h1 {
+      background-color: #43f4ee;
+      color: #f2ecec;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    img#quiz-image {
+      width: 300px;
+      height: 300px;
+      object-fit: contain; /* 이미지 비율 유지 */
+      border-radius: 8px;
+      background: #e0e0e0;
+      margin-bottom: 15px;
+    }
+
+    #hint {
+      font-style: italic;
+      color: #555;
+      margin-bottom: 10px;
+    }
+
+    #timer {
+      font-weight: bold;
+      color: red;
+      margin-bottom: 10px;
+    }
+
+    input#answer {
+      padding: 10px;
+      font-size: 16px;
+      width: 220px;
+      margin-right: 10px;
+    }
+
+    button {
+      padding: 10px 15px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 5px;
+      border-radius: 5px;
+      border: none;
+      background-color: #43f4ee;
+      color: #fff;
+    }
+
+    #result {
+      font-weight: bold;
+      margin-top: 15px;
+    }
+
+    /* 모바일 반응형 */
+    @media (max-width: 480px) {
+      img#quiz-image {
+        width: 90%;
+        height: auto;
+      }
+      input#answer {
+        width: 70%;
+        margin-bottom: 10px;
+      }
+      button {
+        width: 45%;
+        margin: 5px 2px;
+      }
+    }
   </style>
 </head>
 <body>
   <h1>랜덤 위인 퀴즈</h1>
-  <div id="quiz">
-    <img id="person-img" src="" alt="사진">
-    <p id="hint"></p>
+  <p id="timer"></p>
+  <p id="hint"></p>
+  <img id="quiz-image" src="" alt="위인 사진">
+
+  <div>
     <input id="answer" placeholder="이 사람은 누구일까요?">
     <button onclick="checkAnswer()">정답 확인</button>
     <button onclick="loadQuiz()">다시 시작</button>
   </div>
+
   <p id="result"></p>
 
   <script>
     let currentName = "";
+    let timer;
+    let timeLeft = 12;
 
     async function loadQuiz() {
+      clearInterval(timer);
       document.getElementById("result").textContent = "";
+      document.getElementById("answer").value = "";
+      document.getElementById("timer").textContent = `남은 시간: ${timeLeft}초`;
+
       const res = await fetch("/api/quiz");
       const data = await res.json();
+
       if (data.error) {
         document.getElementById("result").textContent = data.error;
         return;
       }
+
       currentName = data.name;
-      document.getElementById("person-img").src = data.imageUrl;
+      document.getElementById("quiz-image").src = data.imageUrl;
       document.getElementById("hint").textContent = "힌트: " + data.hint;
-      document.getElementById("answer").value = "";
+
+      timeLeft = 12;
+      startTimer();
+    }
+
+    function startTimer() {
+      clearInterval(timer);
+      timer = setInterval(() => {
+        document.getElementById("timer").textContent = `남은 시간: ${timeLeft}초`;
+        timeLeft--;
+        if (timeLeft < 0) {
+          clearInterval(timer);
+          document.getElementById("result").textContent = `시간 초과! 정답은 ${currentName}`;
+          setTimeout(loadQuiz, 2000);
+        }
+      }, 1000);
     }
 
     function checkAnswer() {
+      clearInterval(timer);
       const user = document.getElementById("answer").value.trim();
       const result = document.getElementById("result");
-      result.textContent = (user === currentName) ? "✅ 정답입니다!" : `❌ 오답! 정답은 ${currentName}`;
+      result.textContent = (user === currentName)
+        ? "✅ 정답입니다!"
+        : `❌ 오답! 정답은 ${currentName}`;
+      setTimeout(loadQuiz, 2000);
     }
 
     loadQuiz();
   </script>
 </body>
 </html>
+
