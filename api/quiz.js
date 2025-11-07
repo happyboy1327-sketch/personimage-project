@@ -1,8 +1,22 @@
+// server.js
+import express from "express";
 import axios from "axios";
+import dotenv from "dotenv";
+dotenv.config();
+
+const app = express();
+app.use(express.static("public"));
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 const GOOGLE_CX = process.env.GOOGLE_CX;
 
+let today = new Date().toDateString();
+let figures = [];
+let usedIndexes = [];
+let callCount = 0;
+const DAILY_LIMIT = 100;
+
+// 🔹 하루 6명 랜덤 세트 생성
 function refreshDailyFigures() {
   const allFigures = [
     { name: "세종대왕", hint: "한글 창제" },
@@ -15,22 +29,18 @@ function refreshDailyFigures() {
     { name: "신사임당", hint: "조선 시대 화가이자 율곡 이이의 어머니" },
     { name: "정약용", hint: "조선의 실학자, 다산" },
     { name: "마리 퀴리", hint: "방사능 연구" },
+    { name: "넬슨 만델라", hint: "남아프리카공화국 인권운동가" },
     { name: "레오나르도 다 빈치", hint: "모나리자 화가" },
     { name: "나폴레옹", hint: "프랑스의 군인·정치가" },
     { name: "체 게바라", hint: "쿠바 혁명가" },
     { name: "갈릴레오 갈릴레이", hint: "지동설 주장" }
   ];
+
   const shuffled = allFigures.sort(() => Math.random() - 0.5);
   return shuffled.slice(0, 6);
 }
 
-// 하루 단위 갱신
-let figures = refreshDailyFigures();
-let today = new Date().toDateString();
-let usedIndexes = [];
-let callCount = 0;
-const DAILY_LIMIT = 100;
-
+// 🔹 날짜 갱신 체크
 function resetIfNewDay() {
   const now = new Date().toDateString();
   if (now !== today) {
@@ -38,40 +48,31 @@ function resetIfNewDay() {
     figures = refreshDailyFigures();
     usedIndexes = [];
     callCount = 0;
-    console.log("🔄 새로운 날짜 감지 → 위인 세트 갱신 완료 & 호출 카운트 초기화");
+    console.log("🔄 새로운 세트 생성 완료");
   }
 }
 
-export default async function handler(req, res) {
+// 🔹 API
+app.get("/api/quiz", async (req, res) => {
   resetIfNewDay();
 
-  if (callCount >= DAILY_LIMIT) {
-    return res.status(429).json({ error: "오늘의 호출 한도를 초과했습니다 (100회)" });
-  }
+  if (callCount >= DAILY_LIMIT) return res.status(429).json({ error: "일일 호출 한도 초과" });
 
   try {
-    const availableIndexes = figures
-      .map((_, i) => i)
-      .filter((i) => !usedIndexes.includes(i));
-
+    const availableIndexes = figures.map((_, i) => i).filter(i => !usedIndexes.includes(i));
     if (availableIndexes.length === 0) usedIndexes = [];
 
-    const selectedIndex =
-      availableIndexes[Math.floor(Math.random() * availableIndexes.length)];
-
+    const selectedIndex = availableIndexes[Math.floor(Math.random() * availableIndexes.length)];
     usedIndexes.push(selectedIndex);
     const question = figures[selectedIndex];
 
-    const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${GOOGLE_CX}&searchType=image&q=${encodeURIComponent(
-      question.name
-    )}`;
-
+    const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${GOOGLE_CX}&searchType=image&q=${encodeURIComponent(question.name)}`;
     const { data } = await axios.get(url);
     const imageUrl = data.items?.[0]?.link || "";
 
     callCount++;
 
-    res.status(200).json({
+    res.json({
       name: question.name,
       hint: question.hint,
       imageUrl
@@ -79,4 +80,8 @@ export default async function handler(req, res) {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-}
+});
+
+// 🔹 Vercel 배포용
+export default app;
+

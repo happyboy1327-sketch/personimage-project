@@ -5,66 +5,90 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>랜덤 위인 퀴즈</title>
   <style>
-    body { 
-      font-family: sans-serif; 
-      text-align: center; 
-      padding: 5vw; 
-      background: #f9f9f9; 
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+    h1 {
+      background-color: #43f4ee;
+      color: #f2ecec;
+      padding: 15px 0;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    #quiz-container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      display: inline-block;
+      max-width: 400px;
+      width: 90%;
+    }
+    img#person-img {
+      width: 100%;
+      height: auto;
+      max-height: 300px;
+      object-fit: contain;
+      border-radius: 8px;
+      background: #e0e0e0;
+      margin-bottom: 15px;
+    }
+    #hint {
+      font-weight: bold;
+      color: #555;
+      margin: 10px 0;
+    }
+    input {
+      padding: 12px;
+      width: 80%;
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      padding: 12px 18px;
+      font-size: 1.1rem;
+      margin: 5px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      background-color: #43f4ee;
+      color: #fff;
+    }
+    button:hover {
+      background-color: #36cfd6;
+    }
+    #timer {
+      font-weight: bold;
+      color: #f44336;
+      margin: 10px 0;
+      font-size: 1.1rem;
+    }
+    #result {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-top: 10px;
     }
 
-    h1 { 
-      background-color: #43f4ee; 
-      color: #f2ecec; 
-      padding: 1em; 
-      border-radius: 10px; 
-      font-size: 6vw; 
-      margin-bottom: 4vw;
+    /* 반응형: 모바일, 태블릿 */
+    @media (max-width: 768px) {
+      img#person-img { max-height: 250px; }
+      input, button, #timer { font-size: 1rem; padding: 10px; }
     }
-
-    img { 
-      width: 80vw; 
-      max-width: 300px; 
-      height: auto; 
-      object-fit: contain; 
-      border-radius: 10px; 
-      margin-bottom: 3vw; 
-    }
-
-    #hint { 
-      font-weight: bold; 
-      color: #555; 
-      margin: 2vw 0; 
-      font-size: 4vw;
-    }
-
-    input, button { 
-      padding: 2vw 3vw; 
-      margin: 1vw; 
-      font-size: 4vw; 
-      border-radius: 8px; 
-      border: 1px solid #ccc; 
-    }
-
-    button { 
-      background-color: #43f4ee; 
-      color: #f2ecec; 
-      cursor: pointer; 
-    }
-
-    button:hover { 
-      opacity: 0.8; 
-    }
-
-    #result, #timer { 
-      margin-top: 3vw; 
-      font-size: 5vw; 
-      font-weight: bold; 
+    @media (max-width: 480px) {
+      img#person-img { max-height: 200px; }
+      input, button, #timer { font-size: 1.05rem; padding: 12px; }
+      #quiz-container { width: 95%; padding: 15px; }
     }
   </style>
 </head>
 <body>
   <h1>랜덤 위인 퀴즈</h1>
-  <div id="quiz">
+  <div id="quiz-container">
     <img id="person-img" src="" alt="사진">
     <p id="hint"></p>
     <input id="answer" placeholder="이 사람은 누구일까요?">
@@ -72,58 +96,62 @@
       <button onclick="checkAnswer()">정답 확인</button>
       <button onclick="loadQuiz()">다시 시작</button>
     </div>
+    <p id="timer"></p>
+    <p id="result"></p>
   </div>
-  <p id="timer"></p>
-  <p id="result"></p>
 
   <script>
     let currentName = "";
     let timer;
-    let timeLeft = 12;
+    const TIME_LIMIT = 12;
+    let timeLeft = TIME_LIMIT;
 
     async function loadQuiz() {
       clearInterval(timer);
-      timeLeft = 12;
       document.getElementById("result").textContent = "";
-      document.getElementById("timer").textContent = `남은 시간: ${timeLeft}초`;
+      document.getElementById("timer").textContent = "";
 
-      const res = await fetch("/api/quiz");
-      const data = await res.json();
-      if (data.error) {
-        document.getElementById("result").textContent = data.error;
-        return;
-      }
+      try {
+        const res = await fetch("/api/quiz");
+        const data = await res.json();
 
-      currentName = data.name;
-      document.getElementById("person-img").src = data.imageUrl;
-      document.getElementById("hint").textContent = "힌트: " + data.hint;
-      document.getElementById("answer").value = "";
-
-      startTimer();
-    }
-
-    function startTimer() {
-      timer = setInterval(() => {
-        timeLeft--;
-        document.getElementById("timer").textContent = `남은 시간: ${timeLeft}초`;
-        if (timeLeft <= 0) {
-          clearInterval(timer);
-          document.getElementById("result").textContent = `시간 초과! 정답은 ${currentName}`;
-          setTimeout(loadQuiz, 2000); // 2초 후 다음 문제
+        if (data.error) {
+          document.getElementById("result").textContent = data.error;
+          return;
         }
-      }, 1000);
+
+        currentName = data.name;
+        document.getElementById("person-img").src = data.imageUrl;
+        document.getElementById("hint").textContent = "힌트: " + data.hint;
+        document.getElementById("answer").value = "";
+
+        timeLeft = TIME_LIMIT;
+        document.getElementById("timer").textContent = `남은 시간: ${timeLeft}s`;
+
+        timer = setInterval(() => {
+          timeLeft--;
+          document.getElementById("timer").textContent = `남은 시간: ${timeLeft}s`;
+          if (timeLeft <= 0) {
+            clearInterval(timer);
+            document.getElementById("result").textContent = `⏰ 시간 초과! 정답은 ${currentName}`;
+          }
+        }, 1000);
+
+      } catch (err) {
+        document.getElementById("result").textContent = "⚠ 서버 연결 실패";
+      }
     }
 
     function checkAnswer() {
       clearInterval(timer);
       const user = document.getElementById("answer").value.trim();
-      const result = document.getElementById("result");
       if (!user) return;
+      const result = document.getElementById("result");
       result.textContent = (user === currentName) ? "✅ 정답입니다!" : `❌ 오답! 정답은 ${currentName}`;
-      setTimeout(loadQuiz, 2000); // 2초 후 다음 문제
     }
 
     loadQuiz();
   </script>
 </body>
 </html>
+
