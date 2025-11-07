@@ -1,157 +1,197 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>랜덤 위인 퀴즈</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      text-align: center;
-      padding: 20px;
-      background: #f9f9f9;
-    }
-    h1 {
-      background-color: #43f4ee;
-      color: #f2ecec;
-      padding: 15px 0;
-      border-radius: 10px;
-      margin-bottom: 20px;
-    }
-    #quiz-container {
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      display: inline-block;
-      max-width: 400px;
-      width: 90%;
-    }
-    img#person-img {
-      width: 100%;
-      height: auto;
-      max-height: 300px;
-      object-fit: contain;
-      border-radius: 8px;
-      background: #e0e0e0;
-      margin-bottom: 15px;
-    }
-    #hint {
-      font-weight: bold;
-      color: #555;
-      margin: 10px 0;
-    }
-    input {
-      padding: 12px;
-      width: 80%;
-      font-size: 1.1rem;
-      margin-bottom: 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-    button {
-      padding: 12px 18px;
-      font-size: 1.1rem;
-      margin: 5px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      background-color: #43f4ee;
-      color: #fff;
-    }
-    button:hover {
-      background-color: #36cfd6;
-    }
-    #timer {
-      font-weight: bold;
-      color: #f44336;
-      margin: 10px 0;
-      font-size: 1.1rem;
-    }
-    #result {
-      font-size: 1.2rem;
-      font-weight: bold;
-      margin-top: 10px;
-    }
-
-    /* 반응형: 모바일, 태블릿 */
-    @media (max-width: 768px) {
-      img#person-img { max-height: 250px; }
-      input, button, #timer { font-size: 1rem; padding: 10px; }
-    }
-    @media (max-width: 480px) {
-      img#person-img { max-height: 200px; }
-      input, button, #timer { font-size: 1.05rem; padding: 12px; }
-      #quiz-container { width: 95%; padding: 15px; }
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>랜덤 위인 퀴즈</title>
+<style>
+  :root{
+    --card-w: 420px;
+    --accent: #43f4ee;
+    --bg: #f9f9f9;
+  }
+  html,body{height:100%;margin:0}
+  body{
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: var(--bg);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .card{
+    width:90%;
+    max-width:var(--card-w);
+    background:#fff;
+    border-radius:12px;
+    box-shadow:0 6px 22px rgba(0,0,0,0.08);
+    padding:18px;
+    text-align:center;
+  }
+  h1{
+    margin:0 0 12px;
+    background:var(--accent);
+    color:#f2ecec;
+    padding:12px;
+    border-radius:8px;
+    font-size:1.4rem;
+  }
+  img{
+    width:100%;
+    max-height:320px;
+    object-fit:contain;
+    background:#eee;
+    border-radius:8px;
+    margin-bottom:12px;
+  }
+  #hint{font-weight:600;color:#444;margin:6px 0 10px;font-size:1rem}
+  #infoRow{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px}
+  #timer{color:#d32;font-weight:700}
+  #remaining{font-size:0.9rem;color:#666}
+  input{
+    width:100%;
+    box-sizing:border-box;
+    padding:12px;
+    font-size:1rem;
+    border-radius:8px;
+    border:1px solid #ddd;
+    margin-bottom:10px;
+  }
+  .btnRow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  button{
+    flex:1 1 140px;
+    padding:12px 14px;
+    font-size:1rem;
+    border-radius:8px;
+    border:none;
+    background:var(--accent);
+    color:#fff;
+    cursor:pointer;
+  }
+  #result{margin-top:12px;font-weight:700;font-size:1.05rem;color:#222;min-height:1.2em}
+  @media (max-width:800px){
+    h1{font-size:1.2rem}
+    #hint{font-size:0.98rem}
+    button{font-size:1rem;padding:13px}
+  }
+  @media (max-width:480px){
+    :root{--card-w: 360px}
+    h1{font-size:1.1rem;padding:10px}
+    #hint{font-size:0.95rem}
+    #timer{font-size:1.05rem}
+    button{font-size:1.05rem;padding:12px}
+  }
+</style>
 </head>
 <body>
-  <h1>랜덤 위인 퀴즈</h1>
-  <div id="quiz-container">
-    <img id="person-img" src="" alt="사진">
-    <p id="hint"></p>
-    <input id="answer" placeholder="이 사람은 누구일까요?">
-    <div>
-      <button onclick="checkAnswer()">정답 확인</button>
-      <button onclick="loadQuiz()">다시 시작</button>
+  <div class="card">
+    <h1>랜덤 위인 퀴즈</h1>
+
+    <img id="person-img" src="/default-image.png" alt="위인 사진" />
+    <div id="hint">힌트: —</div>
+
+    <div id="infoRow">
+      <div id="timer">남은 시간: --s</div>
+      <div id="remaining">남은 호출: --</div>
     </div>
-    <p id="timer"></p>
-    <p id="result"></p>
+
+    <input id="answer" placeholder="이 사람은 누구일까요? (이름만 입력)" autocomplete="off" />
+    <div class="btnRow">
+      <button id="checkBtn" onclick="checkAnswer()">정답 확인</button>
+      <button id="reloadBtn" onclick="loadQuiz()">다시 시작</button>
+    </div>
+
+    <div id="result"></div>
   </div>
 
-  <script>
-    let currentName = "";
-    let timer;
-    const TIME_LIMIT = 12;
-    let timeLeft = TIME_LIMIT;
+<script>
+let currentName = "";
+let timer = null;
+const TIME_LIMIT = 12;
+let timeLeft = TIME_LIMIT;
+let isWaiting = false;
 
-    async function loadQuiz() {
-      clearInterval(timer);
-      document.getElementById("result").textContent = "";
-      document.getElementById("timer").textContent = "";
+function setButtonsDisabled(v){
+  document.getElementById('checkBtn').disabled = v;
+  document.getElementById('reloadBtn').disabled = v;
+}
 
-      try {
-        const res = await fetch("/api/quiz");
-        const data = await res.json();
+async function loadQuiz(){
+  // 준비
+  if (isWaiting) return;
+  clearInterval(timer);
+  isWaiting = false;
+  setButtonsDisabled(false);
+  document.getElementById('result').textContent = "";
+  document.getElementById('person-img').src = '/default-image.png';
+  document.getElementById('hint').textContent = '힌트: —';
+  document.getElementById('remaining').textContent = '남은 호출: --';
+  document.getElementById('answer').value = '';
 
-        if (data.error) {
-          document.getElementById("result").textContent = data.error;
-          return;
-        }
+  timeLeft = TIME_LIMIT;
+  document.getElementById('timer').textContent = `남은 시간: ${timeLeft}s`;
 
-        currentName = data.name;
-        document.getElementById("person-img").src = data.imageUrl;
-        document.getElementById("hint").textContent = "힌트: " + data.hint;
-        document.getElementById("answer").value = "";
+  try {
+    const res = await fetch('/api/quiz');
+    const data = await res.json();
 
-        timeLeft = TIME_LIMIT;
-        document.getElementById("timer").textContent = `남은 시간: ${timeLeft}s`;
+    if (!data || data.error || !data.name) {
+      document.getElementById('result').textContent = data?.error || '데이터를 불러오지 못했습니다.';
+      return;
+    }
 
-        timer = setInterval(() => {
-          timeLeft--;
-          document.getElementById("timer").textContent = `남은 시간: ${timeLeft}s`;
-          if (timeLeft <= 0) {
-            clearInterval(timer);
-            document.getElementById("result").textContent = `⏰ 시간 초과! 정답은 ${currentName}`;
-          }
-        }, 1000);
+    currentName = data.name;
+    document.getElementById('person-img').src = data.imageUrl || '/default-image.png';
+    document.getElementById('hint').textContent = "힌트: " + (data.hint || '힌트 없음');
+    document.getElementById('remaining').textContent = `남은 호출: ${data.remaining ?? '-'}`;
 
-      } catch (err) {
-        document.getElementById("result").textContent = "⚠ 서버 연결 실패";
+    // 시작 타이머
+    timer = setInterval(() => {
+      timeLeft--;
+      document.getElementById('timer').textContent = `남은 시간: ${timeLeft}s`;
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        setButtonsDisabled(true);
+        document.getElementById('result').textContent = `⏰ 시간 초과! 정답: ${currentName}`;
+        // 자동 다음 문제
+        isWaiting = true;
+        setTimeout(()=>{ isWaiting=false; loadQuiz(); }, 2000);
       }
-    }
+    }, 1000);
+  } catch (err) {
+    document.getElementById('result').textContent = '서버 연결 실패';
+    console.error(err);
+  }
+}
 
-    function checkAnswer() {
-      clearInterval(timer);
-      const user = document.getElementById("answer").value.trim();
-      if (!user) return;
-      const result = document.getElementById("result");
-      result.textContent = (user === currentName) ? "✅ 정답입니다!" : `❌ 오답! 정답은 ${currentName}`;
-    }
+function normalize(s){
+  return (s||'').toString().trim().replace(/\s+/g,' ').normalize();
+}
 
-    loadQuiz();
-  </script>
+function checkAnswer(){
+  if (!currentName) return;
+  clearInterval(timer);
+  setButtonsDisabled(true);
+  const user = normalize(document.getElementById('answer').value);
+  const correct = normalize(currentName);
+  if (!user) {
+    document.getElementById('result').textContent = '이름을 입력해 주세요.';
+    setButtonsDisabled(false);
+    return;
+  }
+  if (user === correct) {
+    document.getElementById('result').textContent = '✅ 정답입니다!';
+  } else {
+    document.getElementById('result').textContent = `❌ 오답! 정답은 ${currentName}`;
+  }
+  // 자동 다음 문제
+  isWaiting = true;
+  setTimeout(()=>{ isWaiting=false; loadQuiz(); }, 2000);
+}
+
+window.addEventListener('load', loadQuiz);
+</script>
 </body>
 </html>
+
 
